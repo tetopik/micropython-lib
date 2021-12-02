@@ -22,6 +22,7 @@ class MultiplePB:
         
     def state(self):
         
+        # Set internal pullup or pulldown resistor
         if self.pull==1:
             pb = Pin(self.pin, Pin.IN, Pin.PULL_UP)
             self.is_pressed = not pb.value()
@@ -29,19 +30,21 @@ class MultiplePB:
             pb = Pin(self.pin, Pin.IN, Pin.PULL_DOWN)
             self.is_pressed = pb.value()
         
+        # Sensing the button state if pressed
         if self.is_pressed and not self.pressed:
             self.pressed = 1
             self.pressed_time = ticks_ms()
             if self.print: print('Button %s Pressed!' % self)
         
+        # Sensing the button state if released
         if not self.is_pressed and self.pressed:
             self.pressed = 0
             interval = ticks_diff(ticks_ms(),self.pressed_time)
             if interval >= self.pressed_trigger:
-                self.output = 3
+                self.output = 3 # LONG PRESSED == 3
             else:
                 if self.firstclick == 1:
-                    self.output = 2
+                    self.output = 2 # DOUBLE CLICKED == 2
                     self.firstclick = 0
                 else:
                     self.firstclick = 1
@@ -50,19 +53,22 @@ class MultiplePB:
         if self.firstclick:
             if ticks_diff(ticks_ms(),self.wait_secondclick) >= self.wait_hold:
                 self.firstclick = 0
-                self.output = 1
-                
+                self.output = 1 # SINGLE PRESSED == 1
+        
+        # Start timer for triggered output delay
         if (self.output>0) and (self.trig==0):
             self.trig = 1
             self.trig_time = ticks_ms()
             if self.print: print('Button %s State = %d' % (self, self.output))
         
+        # Set the outpul LOW or 0 after given set time
         if (self.output>0) and (self.trig==1):
             if (ticks_diff(ticks_ms(),self.trig_time)) >= self.trig_hold:
                 self.trig = 0
                 self.output = 0
                 if self.print: print('Button %s State = %d\n' % (self, self.output))
         
+        # Send the output
         return self.output
     
     
